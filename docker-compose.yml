@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: famcart
+      POSTGRES_PASSWORD: famcart
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - famcart_db_data:/var/lib/postgresql/data
+
+volumes:
+  famcart_db_data:
