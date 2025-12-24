@@ -11,7 +11,7 @@
 
 ## Group
 
-1. `/group/all` (GET)
+1. `/group/` (GET)
 2. `/group/create` (POST)
 3. `/group/:id/` (GET)
 4. `/group/:id/exit` (POST)

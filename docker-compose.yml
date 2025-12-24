@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - famcart_db_data:/var/lib/postgresql/data
+      - famcart_db_data:/var/lib/postgresql
 
 volumes:
   famcart_db_data:

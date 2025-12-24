@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 
-import app from './app'
+import app from './app';
 
 const fastify = Fastify({
     logger: true,
@@ -15,4 +15,4 @@ fastify.listen({ port: 3000 }, (err, addr) => {
     }
 
     fastify.log.info(`Server listening at ${addr}`);
-})
+});
