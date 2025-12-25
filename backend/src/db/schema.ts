@@ -65,6 +65,32 @@ export const groupMembers = pgTable('group_members', {
     profile_id: uuid('profile_id')
         .notNull()
         .references(() => profiles.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 20 })
+        .$type<'admin' | 'member'>()
+        .notNull()
+        .default('member'),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    updated_at: timestamp('updated_at')
+        .defaultNow()
+        .notNull()
+        .$onUpdate(() => new Date()),
+});
+
+export const invitations = pgTable('invitations', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    group_id: uuid('group_id')
+        .notNull()
+        .references(() => groups.id, { onDelete: 'cascade' }),
+    invited_profile_id: uuid('invited_profile_id')
+        .notNull()
+        .references(() => profiles.id, { onDelete: 'cascade' }),
+    invited_by_profile_id: uuid('invited_by_profile_id')
+        .notNull()
+        .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: varchar('status', { length: 20 })
+        .$type<'pending' | 'accepted' | 'rejected'>()
+        .notNull()
+        .default('pending'),
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_at: timestamp('updated_at')
         .defaultNow()
@@ -90,6 +116,12 @@ export const profilesRelations = relations(profiles, ({ one, many }) => ({
         references: [users.id],
     }),
     groupMembers: many(groupMembers),
+    receivedInvitations: many(invitations, {
+        relationName: 'invitedProfile',
+    }),
+    sentInvitations: many(invitations, {
+        relationName: 'invitedBy',
+    }),
 }));
 
 export const groupsRelations = relations(groups, ({ many }) => ({
@@ -103,6 +135,21 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
     }),
     profile: one(profiles, {
         fields: [groupMembers.profile_id],
+        references: [profiles.id],
+    }),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+    group: one(groups, {
+        fields: [invitations.group_id],
+        references: [groups.id],
+    }),
+    invitedProfile: one(profiles, {
+        fields: [invitations.invited_profile_id],
+        references: [profiles.id],
+    }),
+    invitedBy: one(profiles, {
+        fields: [invitations.invited_by_profile_id],
         references: [profiles.id],
     }),
 }));
