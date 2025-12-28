@@ -1,2 +1,0 @@
-ALTER TABLE "groups" ADD COLUMN "owner_profile_id" uuid NOT NULL;--> statement-breakpoint
-ALTER TABLE "groups" ADD CONSTRAINT "groups_owner_profile_id_profiles_id_fk" FOREIGN KEY ("owner_profile_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;

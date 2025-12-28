@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766505016490,
-      "tag": "0000_melodic_invaders",
+      "when": 1766733859661,
+      "tag": "0000_pale_ronan",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1766635354246,
-      "tag": "0001_omniscient_namora",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766635743272,
-      "tag": "0002_messy_hellfire_club",
+      "when": 1766767064605,
+      "tag": "0001_minor_scorpion",
       "breakpoints": true
     }
   ]

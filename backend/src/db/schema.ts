@@ -5,11 +5,12 @@ import {
     timestamp,
     uuid,
     varchar,
+    index,
 } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
-    email: varchar('username', { length: 255 }).notNull().unique(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
     password: varchar('password', { length: 255 }).notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_at: timestamp('updated_at')
@@ -18,33 +19,41 @@ export const users = pgTable('users', {
         .$onUpdate(() => new Date()),
 });
 
-export const sessions = pgTable('sessions', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    user_id: uuid('user_id')
-        .notNull()
-        .references(() => users.id, { onDelete: 'cascade' }),
-    created_at: timestamp('created_at').defaultNow().notNull(),
-    updated_at: timestamp('updated_at')
-        .defaultNow()
-        .notNull()
-        .$onUpdate(() => new Date()),
-});
+export const sessions = pgTable(
+    'sessions',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        user_id: uuid('user_id')
+            .notNull()
+            .references(() => users.id, { onDelete: 'cascade' }),
+        created_at: timestamp('created_at').defaultNow().notNull(),
+        updated_at: timestamp('updated_at')
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (t) => [index('sessions_user_id_idx').on(t.user_id)],
+);
 
-export const profiles = pgTable('profiles', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    user_id: uuid('user_id')
-        .notNull()
-        .references(() => users.id, { onDelete: 'cascade' }),
-    name: varchar('first_name', { length: 100 }).notNull(),
-    gender: varchar('gender', { length: 50 })
-        .$type<'male' | 'female' | 'other'>()
-        .notNull(),
-    created_at: timestamp('created_at').defaultNow().notNull(),
-    updated_at: timestamp('updated_at')
-        .defaultNow()
-        .notNull()
-        .$onUpdate(() => new Date()),
-});
+export const profiles = pgTable(
+    'profiles',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        user_id: uuid('user_id')
+            .notNull()
+            .references(() => users.id, { onDelete: 'cascade' }),
+        name: varchar('name', { length: 100 }).notNull(),
+        gender: varchar('gender', { length: 50 })
+            .$type<'male' | 'female' | 'other'>()
+            .notNull(),
+        created_at: timestamp('created_at').defaultNow().notNull(),
+        updated_at: timestamp('updated_at')
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (t) => [index('profiles_user_id_idx').on(t.user_id)],
+);
 
 export const groups = pgTable('groups', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -57,24 +66,60 @@ export const groups = pgTable('groups', {
         .$onUpdate(() => new Date()),
 });
 
-export const groupMembers = pgTable('group_members', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    group_id: uuid('group_id')
-        .notNull()
-        .references(() => groups.id, { onDelete: 'cascade' }),
-    profile_id: uuid('profile_id')
-        .notNull()
-        .references(() => profiles.id, { onDelete: 'cascade' }),
-    role: varchar('role', { length: 20 })
-        .$type<'admin' | 'member'>()
-        .notNull()
-        .default('member'),
-    created_at: timestamp('created_at').defaultNow().notNull(),
-    updated_at: timestamp('updated_at')
-        .defaultNow()
-        .notNull()
-        .$onUpdate(() => new Date()),
-});
+// export const categories = pgTable('categories', {
+//     name: varchar('name', { length: 100 }).primaryKey(),
+//     created_at: timestamp('created_at').defaultNow().notNull(),
+// });
+
+export const carts = pgTable(
+    'carts',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        group_id: uuid('group_id')
+            .notNull()
+            .references(() => groups.id, { onDelete: 'cascade' }),
+        item_name: varchar('item_name', { length: 255 }).notNull(),
+        quantity: integer('quantity').notNull().default(1),
+        current: integer('current').notNull().default(0),
+        category: varchar('category', { length: 100 })
+            .notNull(),
+            // .references(() => categories.name),
+        price: integer('price').notNull().default(0),
+        created_at: timestamp('created_at').defaultNow().notNull(),
+        updated_at: timestamp('updated_at')
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (t) => [
+        index('carts_group_id_idx').on(t.group_id),
+        index('carts_category_idx').on(t.category),
+        index('carts_group_item_unique').on(t.group_id, t.item_name),
+    ],
+);
+
+export const groupMembers = pgTable(
+    'group_members',
+    {
+        id: uuid('id').primaryKey().defaultRandom(),
+        group_id: uuid('group_id')
+            .notNull()
+            .references(() => groups.id, { onDelete: 'cascade' }),
+        profile_id: uuid('profile_id')
+            .notNull()
+            .references(() => profiles.id, { onDelete: 'cascade' }),
+        role: varchar('role', { length: 20 })
+            .$type<'admin' | 'member'>()
+            .notNull()
+            .default('member'),
+        created_at: timestamp('created_at').defaultNow().notNull(),
+        updated_at: timestamp('updated_at')
+            .defaultNow()
+            .notNull()
+            .$onUpdate(() => new Date()),
+    },
+    (t) => [index('group_members_unique').on(t.group_id, t.profile_id)],
+);
 
 export const invitations = pgTable('invitations', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -104,28 +149,27 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
-    user: one(users, {
-        fields: [sessions.user_id],
-        references: [users.id],
-    }),
+    user: one(users, { fields: [sessions.user_id], references: [users.id] }),
 }));
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
-    user: one(users, {
-        fields: [profiles.user_id],
-        references: [users.id],
-    }),
+    user: one(users, { fields: [profiles.user_id], references: [users.id] }),
     groupMembers: many(groupMembers),
-    receivedInvitations: many(invitations, {
-        relationName: 'invitedProfile',
-    }),
-    sentInvitations: many(invitations, {
-        relationName: 'invitedBy',
-    }),
+    receivedInvitations: many(invitations, { relationName: 'invitedProfile' }),
+    sentInvitations: many(invitations, { relationName: 'invitedBy' }),
 }));
 
 export const groupsRelations = relations(groups, ({ many }) => ({
     members: many(groupMembers),
+    carts: many(carts),
+}));
+
+// export const categoriesRelations = relations(categories, ({ many }) => ({
+//     carts: many(carts),
+// }));
+
+export const cartsRelations = relations(carts, ({ one }) => ({
+    group: one(groups, { fields: [carts.group_id], references: [groups.id] }),
 }));
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
