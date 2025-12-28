@@ -23,3 +23,15 @@ export const UnauthorizedAccess = createError(
     'Unauthorized access',
     403,
 );
+
+export const ProfileAlreadyExists = createError(
+    'PROFILE_ALREADY_EXISTS',
+    'Profile is already exists',
+    409,
+);
+
+export const ProfileRequired = createError(
+    'PROFILE_REQUIRED',
+    'Profile is required',
+    403,
+);

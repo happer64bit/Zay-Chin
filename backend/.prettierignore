@@ -1,3 +1,7 @@
 # Ignore artifacts:
 build
 coverage
+drizzle
+keys
+node_modules
+dist

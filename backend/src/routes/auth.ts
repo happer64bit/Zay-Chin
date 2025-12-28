@@ -51,13 +51,12 @@ function setAuthCookies(reply: any, userId: string) {
     reply.setCookie(
         cookies.refresh_token!.key,
         refresh_token,
-        cookies.refresh_token!.options
+        cookies.refresh_token!.options,
     );
 
     const access_token = signAccessToken(userId);
     return access_token;
 }
-
 
 const auth: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
     app.route({
@@ -112,16 +111,26 @@ const auth: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
         method: 'GET',
         url: '/session',
         schema: { security: [{ bearerHttpAuthentication: [] }] },
-        handler: (req, reply) => {
+        handler: async (req, reply) => {
             if (!req.user_id) throw new UnauthorizedAccess();
-            reply.send({ data: { user_id: req.user_id } });
+
+            const user = await db.query.users.findFirst({
+                where: (fields, op) => op.eq(fields.id, req.user_id!),
+                columns: {
+                    password: false,
+                },
+            });
+
+            if (!user) throw new UnauthorizedAccess();
+
+            reply.send({ data: user });
         },
     });
 
     app.route({
         method: 'GET',
         url: '/refresh',
-        handler: (req, reply) => {
+        handler: (req) => {
             const token = req.cookies[cookies.refresh_token!.key];
             if (!token) throw new UnauthorizedAccess();
             const access_token = refreshToken(token);

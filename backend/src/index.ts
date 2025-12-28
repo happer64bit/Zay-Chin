@@ -1,18 +1,10 @@
-import Fastify from 'fastify';
+import { buildServer } from './app';
 
-import app from './app';
-
-const fastify = Fastify({
-    logger: true,
-});
-
-fastify.register(app);
-
-fastify.listen({ port: 3000 }, (err, addr) => {
+(await buildServer()).listen({ port: 3000 }, (err, addr) => {
     if (err) {
-        fastify.log.error(err);
+        console.error(err);
         process.exit(1);
     }
 
-    fastify.log.info(`Server listening at ${addr}`);
+    console.info(`Server listening at ${addr}`);
 });

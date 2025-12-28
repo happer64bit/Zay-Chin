@@ -1,20 +1,17 @@
+import fastify, { type FastifyInstance } from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
-
 import authRoute from './routes/auth';
-import type { FastifyInstance } from 'fastify';
-import { schema } from './graphql';
-import { Context } from './context';
+import groupRoute from './routes/group';
+import profileRoute from './routes/profile';
+import cartRoute from './routes/cart';
 
-export default async function (app: FastifyInstance) {
+export async function buildServer(): Promise<FastifyInstance> {
+    const app = fastify();
+
     await app.register(import('@fastify/cookie'));
-    await app.register(import('./auth'));
 
-    await app.register(import('mercurius'), {
-        schema: schema,
-        graphiql: true,
-        context: (request) => new Context(request)
-    });
+    await app.register(import('./auth'));
 
     await app.register(swagger, {
         openapi: {
@@ -40,4 +37,9 @@ export default async function (app: FastifyInstance) {
     });
 
     await app.register(authRoute, { prefix: '/auth' });
+    await app.register(groupRoute, { prefix: '/group' });
+    await app.register(profileRoute, { prefix: '/profile' });
+    await app.register(cartRoute, { prefix: '/cart' });
+
+    return app;
 }

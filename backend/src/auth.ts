@@ -1,34 +1,21 @@
 import fp from 'fastify-plugin';
 import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken';
 import fs from 'node:fs';
-import { generateKeyPairSync } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { type StringValue } from 'ms';
+import { env } from './env';
 
-let publicKey: Buffer;
-let privateKey: Buffer;
+let publicKey: string;
+let privateKey: string;
 
 export const loadAuthKeys = (): void => {
-    if (process.env.NODE_ENV !== 'production') {
-        const keyPair = generateKeyPairSync('rsa', {
-            modulusLength: 2048,
-            publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
-            privateKeyEncoding: { type: 'pkcs1', format: 'pem' },
-        });
-
-        publicKey = Buffer.from(keyPair.publicKey);
-        privateKey = Buffer.from(keyPair.privateKey);
-    } else {
-        publicKey = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH as string);
-        privateKey = fs.readFileSync(
-            process.env.JWT_PRIVATE_KEY_PATH as string,
-        );
-    }
+    publicKey = fs.readFileSync(env.JWT_PUBLIC_KEY_PATH, 'utf-8');
+    privateKey = fs.readFileSync(env.JWT_PRIVATE_KEY_PATH, 'utf-8');
 };
 
 export const signAccessToken = (
     sub: string,
-    expiresIn: StringValue = '15m',
+    expiresIn: StringValue = '2d',
 ): string => {
     const options: SignOptions = { algorithm: 'RS256', expiresIn };
     return jwt.sign({ sub } as JwtPayload, privateKey, options);
@@ -64,7 +51,7 @@ export const verifyRefreshToken = (token: string): { sub: string } | null => {
 
 const plugin = async (fastify: FastifyInstance): Promise<void> => {
     loadAuthKeys();
-    
+
     fastify.decorateRequest('user_id');
 
     fastify.addHook('preHandler', async (req: FastifyRequest) => {
