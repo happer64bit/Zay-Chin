@@ -1,7 +1,12 @@
 name: Flutter Android Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -24,17 +29,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Upgrade dependencies to latest allowed
-        run: flutter pub upgrade
-
       - name: Run Android build
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Verify APK exists
-        run: ls -l build/app/outputs/flutter-apk/
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v6
         with:
           name: app-release.apk
-          path: zay_chin/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
