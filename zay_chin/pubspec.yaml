@@ -39,6 +39,10 @@ dependencies:
   chiclet: ^1.2.0
   lottie: ^3.3.2
   gif_view: ^1.0.3
+  web_socket_channel: ^3.0.1
+  dio: ^5.7.0
+  flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   # flutter_test:

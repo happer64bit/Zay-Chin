@@ -5,11 +5,17 @@ import authRoute from './routes/auth';
 import groupRoute from './routes/group';
 import profileRoute from './routes/profile';
 import cartRoute from './routes/cart';
+import cartRealtimeRoute from './routes/cart-realtime';
 
 export async function buildServer(): Promise<FastifyInstance> {
-    const app = fastify();
+    const app = fastify({ logger: true });
 
     await app.register(import('@fastify/cookie'));
+
+    await app.register(import('@fastify/cors'), {
+        origin: true, // Allow all origins in development
+        credentials: true, // Allow cookies
+    });
 
     await app.register(import('./auth'));
 
@@ -40,6 +46,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(groupRoute, { prefix: '/group' });
     await app.register(profileRoute, { prefix: '/profile' });
     await app.register(cartRoute, { prefix: '/cart' });
+    await app.register(cartRealtimeRoute, { prefix: '/cart' });
 
     return app;
 }

@@ -1,6 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import db from '../db';
 import { carts } from '../db/schema';
+import { notifyCartUpdated } from '../realtime';
 import { UnauthorizedAccess } from '../errors';
 
 export const assertGroupMember = async (groupId: string, profileId: string) => {
@@ -26,27 +27,7 @@ export const addOrUpdateItem = async (
         quantity: number;
     },
 ) => {
-    const existing = await db.query.carts.findFirst({
-        where: (fields, op) =>
-            op.and(
-                eq(fields.group_id, groupId),
-                eq(fields.item_name, data.item_name),
-            ),
-    });
-
-    if (existing) {
-        return db
-            .update(carts)
-            .set({
-                quantity: sql`${carts.quantity} + ${data.quantity}`,
-                price: data.price,
-                category: data.category,
-            })
-            .where(eq(carts.id, existing.id))
-            .returning();
-    }
-
-    return db
+    const inserted = await db
         .insert(carts)
         .values({
             group_id: groupId,
@@ -56,13 +37,18 @@ export const addOrUpdateItem = async (
             quantity: data.quantity,
         })
         .returning();
+    notifyCartUpdated(groupId);
+    return inserted;
 };
 
 export const removeItem = async (groupId: string, id: string) => {
-    return db
+    const deleted = await db
         .delete(carts)
-        .where(and(eq(carts.group_id, groupId), eq(carts.item_name, id)))
+        .where(and(eq(carts.group_id, groupId), eq(carts.id, id)))
         .returning();
+
+    notifyCartUpdated(groupId);
+    return deleted;
 };
 
 export const updateItem = async (
@@ -94,7 +80,7 @@ export const updateItem = async (
             throw new UnauthorizedAccess('Current cannot exceed quantity');
     }
 
-    return db
+    const updated = await db
         .update(carts)
         .set(data)
         .where(
@@ -104,4 +90,6 @@ export const updateItem = async (
             ),
         )
         .returning();
+    notifyCartUpdated(groupId);
+    return updated;
 };
