@@ -13,8 +13,8 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(import('@fastify/cookie'));
 
     await app.register(import('@fastify/cors'), {
-        origin: true, // Allow all origins in development
-        credentials: true, // Allow cookies
+        origin: true,
+        credentials: true,
     });
 
     await app.register(import('./auth'));
