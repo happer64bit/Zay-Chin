@@ -2,6 +2,11 @@ name: Flutter Android Build
 
 on:
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: Backend Base URL
+        required: true
+        default: http://localhost:3000
 
 jobs:
   build:
@@ -25,7 +30,7 @@ jobs:
         run: flutter pub get
 
       - name: Run Android build
-        run: flutter build apk --release
+        run: flutter build apk --dart-define=BASE_URL=${{ github.event.inputs.base_url }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v6

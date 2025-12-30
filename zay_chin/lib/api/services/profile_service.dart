@@ -12,12 +12,8 @@ class ProfileService {
       if (profile.name.isEmpty) return false;
       if (profile.gender.isEmpty) return false;
       return true;
-    } on DioException catch (e) {
-      final data = e.response?.data;
-      if (data is Map && data['code'] == 'PROFILE_REQUIRED') {
-        return false;
-      }
-      rethrow;
+    } catch (_) {
+      return false;
     }
   }
 

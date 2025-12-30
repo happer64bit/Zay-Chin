@@ -6,8 +6,10 @@ class NewCartItemRow extends StatelessWidget {
   final TextEditingController priceController;
   final int quantity;
   final String category;
+  final String? locationLabel;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onCategoryTap;
+  final VoidCallback onLocationTap;
   final Future<void> Function() onSubmit;
 
   const NewCartItemRow({
@@ -16,8 +18,10 @@ class NewCartItemRow extends StatelessWidget {
     required this.priceController,
     required this.quantity,
     required this.category,
+    this.locationLabel,
     required this.onQuantityChanged,
     required this.onCategoryTap,
+    required this.onLocationTap,
     required this.onSubmit,
   });
 
@@ -60,56 +64,94 @@ class NewCartItemRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: onCategoryTap,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withAlpha(20),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    InkWell(
                       borderRadius: BorderRadius.circular(16),
+                      onTap: onCategoryTap,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.tag, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              category,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: Row(
+                    InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: onLocationTap,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on, size: 16),
+                            const SizedBox(width: 6),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: constraints.maxWidth * 0.4,
+                              ),
+                              child: Text(
+                                locationLabel ?? 'Add location',
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.tag, size: 16),
-                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: quantity > 1
+                              ? () => onQuantityChanged(quantity - 1)
+                              : null,
+                        ),
                         Text(
-                          category,
-                          style: theme.textTheme.bodySmall,
+                          quantity.toString(),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => onQuantityChanged(quantity + 1),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: quantity > 1
-                          ? () => onQuantityChanged(quantity - 1)
-                          : null,
-                    ),
-                    Text(
-                      quantity.toString(),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => onQuantityChanged(quantity + 1),
+                    SizedBox(
+                      height: 36,
+                      child: FilledButton(
+                        onPressed: onSubmit,
+                        child: const Text('Add'),
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(width: 4),
-                FilledButton(
-                  onPressed: onSubmit,
-                  child: const Text('Add'),
-                ),
-              ],
+                );
+              },
             ),
           ],
         ),

@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:18
+    image: imresamu/postgis:18-3.6.1-alpine3.22
     environment:
       POSTGRES_USER: famcart
       POSTGRES_PASSWORD: famcart
@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - famcart_db_data:/var/lib/postgresql
+      - famcart_db_data:/var/lib/postgresql/data
 
 volumes:
   famcart_db_data:

@@ -22,6 +22,9 @@ class CartService {
     required String category,
     required int price,
     required int quantity,
+    double? locationLat,
+    double? locationLng,
+    String? locationName,
   }) async {
     try {
       final response = await _client.dio.post(
@@ -31,6 +34,9 @@ class CartService {
           'category': category,
           'price': price,
           'quantity': quantity,
+          if (locationLat != null) 'location_lat': locationLat,
+          if (locationLng != null) 'location_lng': locationLng,
+          if (locationName != null) 'location_name': locationName,
         },
       );
       final List<dynamic> data = response.data;
@@ -48,6 +54,9 @@ class CartService {
     String? name,
     String? category,
     int? price,
+    double? locationLat,
+    double? locationLng,
+    String? locationName,
   }) async {
     try {
       await _client.dio.patch(
@@ -58,6 +67,9 @@ class CartService {
           if (price != null) 'price': price,
           if (quantity != null) 'quantity': quantity,
           if (current != null) 'current': current,
+          if (locationLat != null) 'location_lat': locationLat,
+          if (locationLng != null) 'location_lng': locationLng,
+          if (locationName != null) 'location_name': locationName,
         },
       );
     } on DioException catch (e) {

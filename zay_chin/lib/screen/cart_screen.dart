@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:zay_chin/api/models/cart.dart';
+import 'package:zay_chin/api/realtime/cart_realtime.dart';
 import 'package:zay_chin/api/services/cart_service.dart';
 import 'package:zay_chin/api/services/group_service.dart';
 import 'package:zay_chin/widget/cart/cart_item_card.dart';
 import 'package:zay_chin/widget/cart/cart_item_edit_card.dart';
 import 'package:zay_chin/widget/cart/category_picker_sheet.dart';
+import 'package:zay_chin/widget/cart/location_picker_sheet.dart';
 import 'package:zay_chin/widget/cart/new_cart_item_row.dart';
 
 class CartScreen extends StatefulWidget {
@@ -20,6 +24,8 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final CartService _cartService = CartService();
   final GroupService _groupService = GroupService();
+  CartRealtime? _realtime;
+  StreamSubscription<List<CartItem>>? _subscription;
 
   List<CartItem> _items = [];
   bool _isLoading = true;
@@ -31,6 +37,9 @@ class _CartScreenState extends State<CartScreen> {
   );
   int _newQuantity = 1;
   String _newCategory = 'General';
+  double? _newLat;
+  double? _newLng;
+  String? _newLocationName;
 
   final List<String> _categories = const [
     'General',
@@ -50,24 +59,54 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _initRealtime();
   }
 
-  Future<void> _loadItems() async {
+  Future<void> _initRealtime() async {
     try {
-      if (_items.isEmpty) {
-        setState(() {
-          _isLoading = true;
-          _errorMessage = null;
-        });
-      }
-      final items = await _cartService.getCart(widget.groupId);
-      items.sort((a, b) => a.id.compareTo(b.id));
-      if (mounted) {
-        setState(() {
-          _items = items;
-          _isLoading = false;
-        });
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      _realtime = CartRealtime(_cartService);
+      
+      // Set up subscription BEFORE connecting to catch initial data
+      _subscription = _realtime!.stream.listen(
+        (items) {
+          if (mounted) {
+            setState(() {
+              items.sort((a, b) => a.id.compareTo(b.id));
+              _items = items;
+              // Always clear loading when we receive data
+              _isLoading = false;
+            });
+          }
+        },
+        onError: (error) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = error.toString();
+              _isLoading = false;
+            });
+          }
+        },
+      );
+      
+      // Now connect, which will emit initial data
+      // The initial data should be received by the listener above
+      await _realtime!.connect(widget.groupId);
+      
+      // Additional safety: ensure loading is cleared after connect completes
+      // This handles the case where the stream might have already emitted
+      if (mounted && _isLoading) {
+        // Give a tiny delay to let the stream listener execute
+        await Future.delayed(const Duration(milliseconds: 50));
+        if (mounted && _isLoading) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -79,8 +118,15 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _realtime?.dispose();
+    super.dispose();
+  }
+
   Future<void> _refresh() async {
-    await _loadItems();
+    await _realtime?.refresh();
   }
 
   Future<void> _pickCategoryCupertino() async {
@@ -89,8 +135,24 @@ class _CartScreenState extends State<CartScreen> {
       currentCategory: _newCategory,
       categories: _categories,
       onCategorySelected: (category) {
-        setState(() {
+                    setState(() {
           _newCategory = category;
+                    });
+                  },
+    );
+  }
+
+  Future<void> _pickLocation() async {
+    await showLocationPickerSheet(
+      context: context,
+      initialLat: _newLat,
+      initialLng: _newLng,
+      initialName: _newLocationName,
+      onPicked: (lat, lng, name) {
+        setState(() {
+          _newLat = lat;
+          _newLng = lng;
+          _newLocationName = name;
         });
       },
     );
@@ -104,17 +166,23 @@ class _CartScreenState extends State<CartScreen> {
     try {
       await _cartService.addItem(
         groupId: widget.groupId,
-        name: name,
-        category: _newCategory,
-        quantity: _newQuantity,
-        price: price,
-      );
+      name: name,
+      category: _newCategory,
+      quantity: _newQuantity,
+      price: price,
+        locationLat: _newLat,
+        locationLng: _newLng,
+        locationName: _newLocationName,
+    );
 
-      _newNameController.clear();
-      _newPriceController.text = '0';
-      _newQuantity = 1;
+    _newNameController.clear();
+    _newPriceController.text = '0';
+    _newQuantity = 1;
+      _newLat = null;
+      _newLng = null;
+      _newLocationName = null;
 
-      await _refresh();
+      // Realtime will update automatically
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -159,7 +227,7 @@ class _CartScreenState extends State<CartScreen> {
     setState(() {
       _editingItemId = null;
     });
-    _refresh();
+    // Realtime will update automatically
   }
 
   Future<void> _showInviteDialog() async {
@@ -230,7 +298,7 @@ class _CartScreenState extends State<CartScreen> {
           CupertinoButton(
             onPressed: _showInviteDialog,
             child: const Icon(CupertinoIcons.share),
-          ),
+      ),
         ],
       ),
       body: Padding(
@@ -279,10 +347,10 @@ class _CartScreenState extends State<CartScreen> {
                             quantity: _editQuantity,
                             category: _editCategory,
                             onQuantityChanged: (val) {
-                              setState(() {
+                                                          setState(() {
                                 _editQuantity = val.clamp(1, 999);
-                              });
-                            },
+                                                          });
+                                                        },
                             onCategoryTap: () async {
                               await showCategoryPickerSheet(
                                 context: context,
@@ -292,9 +360,9 @@ class _CartScreenState extends State<CartScreen> {
                                   setState(() {
                                     _editCategory = category;
                                   });
-                                },
-                              );
-                            },
+                                            },
+                                          );
+                                        },
                             onCancel: _cancelEdit,
                             onSave: () => _saveEdit(item.id),
                           );
@@ -307,19 +375,19 @@ class _CartScreenState extends State<CartScreen> {
                             final nextCurrent = item.current - 1;
                             await _cartService.updateItem(
                               groupId: groupId,
-                              id: item.id,
-                              current: nextCurrent,
-                            );
-                            _refresh();
+                                                id: item.id,
+                                                current: nextCurrent,
+                                              );
+                            // Realtime will update automatically
                           },
                           onIncrement: () async {
                             final nextCurrent = item.current + 1;
                             await _cartService.updateItem(
                               groupId: groupId,
-                              id: item.id,
-                              current: nextCurrent,
-                            );
-                            _refresh();
+                                                id: item.id,
+                                                current: nextCurrent,
+                                              );
+                            // Realtime will update automatically
                           },
                           onDelete: () async {
                             final index = _items.indexWhere((it) => it.id == item.id);
@@ -336,7 +404,7 @@ class _CartScreenState extends State<CartScreen> {
                                 groupId: groupId,
                                 id: removed.id,
                               );
-                              await _refresh();
+                              // Realtime will update automatically
                             } catch (e) {
                               setState(() {
                                 _items.insert(index, removed);
@@ -361,12 +429,14 @@ class _CartScreenState extends State<CartScreen> {
               priceController: _newPriceController,
               quantity: _newQuantity,
               category: _newCategory,
+              locationLabel: _newLocationName,
               onQuantityChanged: (value) {
                 setState(() {
                   _newQuantity = value.clamp(1, 999);
                 });
               },
               onCategoryTap: _pickCategoryCupertino,
+              onLocationTap: _pickLocation,
               onSubmit: _submitNewItem,
             ),
           ],

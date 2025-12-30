@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
     integer,
     pgTable,
@@ -6,7 +6,16 @@ import {
     uuid,
     varchar,
     index,
+    customType,
 } from 'drizzle-orm/pg-core';
+
+// PostGIS geometry type for Point (SRID 4326)
+// We'll store it as text and use SQL functions to convert
+const geometry = customType<{ data: string | null; driverData: string | null }>({
+    dataType: () => 'geometry(Point, 4326)',
+    toDriver: (value) => value,
+    fromDriver: (value) => value,
+});
 
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -85,6 +94,8 @@ export const carts = pgTable(
             .notNull(),
             // .references(() => categories.name),
         price: integer('price').notNull().default(0),
+        location: geometry('location'),
+        location_name: varchar('location_name', { length: 255 }),
         created_at: timestamp('created_at').defaultNow().notNull(),
         updated_at: timestamp('updated_at')
             .defaultNow()

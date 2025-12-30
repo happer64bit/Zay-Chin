@@ -15,7 +15,25 @@ export const assertGroupMember = async (groupId: string, profileId: string) => {
 };
 
 export const getCart = async (groupId: string) => {
-    return db.select().from(carts).where(eq(carts.group_id, groupId));
+    const items = await db
+        .select({
+            id: carts.id,
+            group_id: carts.group_id,
+            item_name: carts.item_name,
+            quantity: carts.quantity,
+            current: carts.current,
+            category: carts.category,
+            price: carts.price,
+            location_lat: sql<number | null>`CAST(ST_Y(${carts.location}) AS DOUBLE PRECISION)`,
+            location_lng: sql<number | null>`CAST(ST_X(${carts.location}) AS DOUBLE PRECISION)`,
+            location_name: carts.location_name,
+            created_at: carts.created_at,
+            updated_at: carts.updated_at,
+        })
+        .from(carts)
+        .where(eq(carts.group_id, groupId));
+    
+    return items;
 };
 
 export const addOrUpdateItem = async (
@@ -25,8 +43,16 @@ export const addOrUpdateItem = async (
         category: string;
         price: number;
         quantity: number;
+        location_lat?: number;
+        location_lng?: number;
+        location_name?: string;
     },
 ) => {
+    const locationGeometry =
+        data.location_lat !== undefined && data.location_lng !== undefined
+            ? sql`ST_SetSRID(ST_MakePoint(${data.location_lng}, ${data.location_lat}), 4326)`
+            : null;
+
     const inserted = await db
         .insert(carts)
         .values({
@@ -35,20 +61,41 @@ export const addOrUpdateItem = async (
             category: data.category,
             price: data.price,
             quantity: data.quantity,
+            location: locationGeometry as any,
+            location_name: data.location_name,
         })
         .returning();
+
+    // Convert geometry back to lat/lng for response
+    const result = await db
+        .select({
+            id: carts.id,
+            group_id: carts.group_id,
+            item_name: carts.item_name,
+            quantity: carts.quantity,
+            current: carts.current,
+            category: carts.category,
+            price: carts.price,
+            location_lat: sql<number | null>`CAST(ST_Y(${carts.location}) AS DOUBLE PRECISION)`,
+            location_lng: sql<number | null>`CAST(ST_X(${carts.location}) AS DOUBLE PRECISION)`,
+            location_name: carts.location_name,
+            created_at: carts.created_at,
+            updated_at: carts.updated_at,
+        })
+        .from(carts)
+        .where(eq(carts.id, inserted[0].id));
+
     notifyCartUpdated(groupId);
-    return inserted;
+    return result;
 };
 
 export const removeItem = async (groupId: string, id: string) => {
-    const deleted = await db
+    await db
         .delete(carts)
-        .where(and(eq(carts.group_id, groupId), eq(carts.id, id)))
-        .returning();
+        .where(and(eq(carts.group_id, groupId), eq(carts.id, id)));
 
     notifyCartUpdated(groupId);
-    return deleted;
+    return [];
 };
 
 export const updateItem = async (
@@ -60,6 +107,9 @@ export const updateItem = async (
         price: number;
         quantity: number;
         current: number;
+        location_lat: number;
+        location_lng: number;
+        location_name: string | null;
     }>,
 ) => {
     if (data.current !== undefined || data.quantity !== undefined) {
@@ -80,16 +130,48 @@ export const updateItem = async (
             throw new UnauthorizedAccess('Current cannot exceed quantity');
     }
 
-    const updated = await db
+    // Convert location_lat/lng to geometry if provided
+    const updateData: any = { ...data };
+    if (data.location_lat !== undefined && data.location_lng !== undefined) {
+        updateData.location = sql`ST_SetSRID(ST_MakePoint(${data.location_lng}, ${data.location_lat}), 4326)`;
+        delete updateData.location_lat;
+        delete updateData.location_lng;
+    } else if (data.location_lat === null || data.location_lng === null) {
+        // Allow clearing location by setting to null
+        updateData.location = null;
+        delete updateData.location_lat;
+        delete updateData.location_lng;
+    }
+
+    await db
         .update(carts)
-        .set(data)
+        .set(updateData)
         .where(
             and(
                 eq(carts.id, id),
                 eq(carts.group_id, groupId),
             ),
-        )
-        .returning();
+        );
+
+    // Return updated item with lat/lng extracted
+    const result = await db
+        .select({
+            id: carts.id,
+            group_id: carts.group_id,
+            item_name: carts.item_name,
+            quantity: carts.quantity,
+            current: carts.current,
+            category: carts.category,
+            price: carts.price,
+            location_lat: sql<number | null>`CAST(ST_Y(${carts.location}) AS DOUBLE PRECISION)`,
+            location_lng: sql<number | null>`CAST(ST_X(${carts.location}) AS DOUBLE PRECISION)`,
+            location_name: carts.location_name,
+            created_at: carts.created_at,
+            updated_at: carts.updated_at,
+        })
+        .from(carts)
+        .where(eq(carts.id, id));
+
     notifyCartUpdated(groupId);
-    return updated;
+    return result;
 };

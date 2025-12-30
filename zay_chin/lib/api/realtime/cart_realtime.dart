@@ -11,6 +11,7 @@ class CartRealtime {
   final CartService _service;
   WebSocketChannel? _channel;
   final _controller = StreamController<List<CartItem>>.broadcast();
+  String? _currentGroupId;
 
   CartRealtime(this._service);
 
@@ -18,10 +19,13 @@ class CartRealtime {
 
   Future<void> connect(String groupId) async {
     await disconnect();
+    _currentGroupId = groupId;
 
     // Initial fetch
     final initial = await _service.getCart(groupId);
-    _controller.add(initial);
+    if (!_controller.isClosed) {
+      _controller.add(initial);
+    }
 
     // Build ws URL from baseUrl (http -> ws, https -> wss)
     final base = ApiConfig.baseUrl;
@@ -39,7 +43,9 @@ class CartRealtime {
           if (data['type'] == 'cart_updated' &&
               data['groupId'] == groupId) {
             final items = await _service.getCart(groupId);
-            _controller.add(items);
+            if (!_controller.isClosed) {
+              _controller.add(items);
+            }
           }
         } catch (_) {
           // Ignore malformed messages
@@ -48,6 +54,12 @@ class CartRealtime {
       onError: (_) {},
       onDone: () {},
     );
+  }
+
+  Future<void> refresh() async {
+    if (_currentGroupId != null) {
+      await connect(_currentGroupId!);
+    }
   }
 
   Future<void> disconnect() async {
