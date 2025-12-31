@@ -76,7 +76,7 @@ class _MapTabState extends State<MapTab> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.zay_chin',
+              userAgentPackageName: 'com.wintkhantlin.zaychin',
             ),
             if (_markers.isNotEmpty)
               MarkerLayer(

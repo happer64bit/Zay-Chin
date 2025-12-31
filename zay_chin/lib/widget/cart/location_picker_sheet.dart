@@ -110,6 +110,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                   TileLayer(
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.wintkhantlin.zaychin',
                   ),
                   if (_selected != null)
                     MarkerLayer(
