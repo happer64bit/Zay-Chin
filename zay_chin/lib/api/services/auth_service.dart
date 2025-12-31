@@ -61,6 +61,7 @@ class AuthService {
   Future<void> logout() async {
     _client.clearToken();
   }
+}
 
   String _handleError(DioException error) {
     if (error.response != null) {

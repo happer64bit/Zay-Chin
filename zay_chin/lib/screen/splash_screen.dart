@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _bootstrap() async {
     final apiClient = ApiClient();
-    apiClient.init();
+    await apiClient.bootstrapAuth();
 
     final hasToken = apiClient.hasToken();
 

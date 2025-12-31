@@ -41,8 +41,11 @@ dependencies:
   gif_view: ^1.0.3
   web_socket_channel: ^3.0.1
   dio: ^5.7.0
+  dio_cookie_manager: ^3.1.0
+  cookie_jar: ^4.0.8
   flutter_secure_storage: ^10.0.0
   shared_preferences: ^2.5.4
+  path_provider: ^2.1.4
   flutter_map: ^7.0.2
   latlong2: ^0.9.0
 
