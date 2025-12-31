@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import db from "../db";
 import { carts } from "../db/schema";
 import { UnauthorizedAccess } from "../errors";
@@ -35,7 +35,8 @@ export const getCart = async (groupId: string) => {
 			updated_at: carts.updated_at,
 		})
 		.from(carts)
-		.where(eq(carts.group_id, groupId));
+		.where(eq(carts.group_id, groupId))
+        .orderBy(desc(carts.created_at));
 
 	return items;
 };
