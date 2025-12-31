@@ -1,3 +1,5 @@
+![Zay Chin](./.github/assets/icon.png)
+
 # FamCart - Family Shopping Cart App
 
 A collaborative shopping cart application that allows family members to create groups, add items to shared carts, and track shopping locations on a map.
@@ -9,7 +11,7 @@ A collaborative shopping cart application that allows family members to create g
 - 📍 **Location Tracking**: Add locations to items and view them on a map
 - 🔄 **Real-time Updates**: WebSocket-based real-time synchronization
 - 🗺️ **Map View**: Visualize all item locations on an interactive map
-- 📱 **Cross-platform**: Flutter app for iOS, Android, and Web
+- 📱 **Cross-platform**: Flutter app for iOS, Android
 
 ## Tech Stack
 
