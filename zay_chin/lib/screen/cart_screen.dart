@@ -159,6 +159,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _submitNewItem() async {
+    FocusScope.of(context).unfocus();
     final name = _newNameController.text.trim();
     final price = int.tryParse(_newPriceController.text) ?? 0;
     if (name.isEmpty) return;
