@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
+import '../client.dart';
 
 class CartRealtime {
   final CartService _service;
@@ -33,7 +34,18 @@ class CartRealtime {
         ? base.replaceFirst('https', 'wss')
         : base.replaceFirst('http', 'ws');
 
-    final uri = Uri.parse('$wsBase/cart/ws?groupId=$groupId');
+    // Get access token from ApiClient
+    final client = ApiClient();
+    final token = client.accessToken;
+    
+    if (token == null) {
+      throw Exception('Authentication required for WebSocket connection');
+    }
+
+    // Build URI with authentication
+    // For WebSocket, we'll pass token as query parameter for simplicity
+    // The backend will check both Authorization header and token query param
+    final uri = Uri.parse('$wsBase/cart/ws?groupId=$groupId&token=$token');
     _channel = WebSocketChannel.connect(uri);
 
     _channel!.stream.listen(

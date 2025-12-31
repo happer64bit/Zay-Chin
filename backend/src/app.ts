@@ -45,8 +45,9 @@ export async function buildServer(): Promise<FastifyInstance> {
     await app.register(authRoute, { prefix: '/auth' });
     await app.register(groupRoute, { prefix: '/group' });
     await app.register(profileRoute, { prefix: '/profile' });
-    await app.register(cartRoute, { prefix: '/cart' });
+    // Register WebSocket route before regular cart routes to avoid route conflicts
     await app.register(cartRealtimeRoute, { prefix: '/cart' });
+    await app.register(cartRoute, { prefix: '/cart' });
 
     return app;
 }

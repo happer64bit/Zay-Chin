@@ -68,5 +68,7 @@ class ApiClient {
 
   bool hasToken() => _accessToken != null;
 
+  String? get accessToken => _accessToken;
+
   Dio get dio => _dio;
 }
