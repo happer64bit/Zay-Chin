@@ -9,6 +9,7 @@ class CartItem {
   final double? locationLat;
   final double? locationLng;
   final String? locationName;
+  final DateTime createdAt;
 
   CartItem({
     required this.id,
@@ -21,6 +22,7 @@ class CartItem {
     this.locationLat,
     this.locationLng,
     this.locationName,
+    required this.createdAt
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class CartItem {
       locationLat: parseLocation(json['location_lat']),
       locationLng: parseLocation(json['location_lng']),
       locationName: json['location_name'] as String?,
+      createdAt: DateTime.parse(json['created_at'])
     );
   }
 }

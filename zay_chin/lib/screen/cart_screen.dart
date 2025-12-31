@@ -76,7 +76,7 @@ class _CartScreenState extends State<CartScreen> {
         (items) {
           if (mounted) {
             setState(() {
-              items.sort((a, b) => a.id.compareTo(b.id));
+              items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
               _items = items;
               // Always clear loading when we receive data
               _isLoading = false;
