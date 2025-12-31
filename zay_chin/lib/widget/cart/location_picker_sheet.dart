@@ -111,6 +111,8 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.wintkhantlin.zaychin',
+                    maxZoom: 19,
+                    minZoom: 1,
                   ),
                   if (_selected != null)
                     MarkerLayer(

@@ -61,47 +61,73 @@ class _MapTabState extends State<MapTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(child: Text(_error!));
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 100,
+            child: Center(child: Text(_error!)),
+          ),
+        ),
+      );
     }
     
-    LatLng center = LatLng(16.78008816315467, 96.14273492619283);
+    LatLng center;
+    if (_markers.isEmpty) {
+      center = const LatLng(16.78008816315467, 96.14273492619283);
+    } else {
+      double avgLat = 0;
+      double avgLng = 0;
+      for (final marker in _markers) {
+        avgLat += marker.point.latitude;
+        avgLng += marker.point.longitude;
+      }
+      avgLat /= _markers.length;
+      avgLng /= _markers.length;
+      center = LatLng(avgLat, avgLng);
+    }
  
     return Stack(
       children: [
-        FlutterMap(
-          options: MapOptions(
-            initialCenter: center,
-            initialZoom: _markers.isEmpty ? 10 : (_markers.length == 1 ? 13 : 11),
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.wintkhantlin.zaychin',
+        SizedBox.expand(
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter: center,
+              initialZoom: _markers.isEmpty ? 10 : (_markers.length == 1 ? 13 : 11),
             ),
-            if (_markers.isNotEmpty)
-              MarkerLayer(
-                markers: _markers
-                    .map(
-                      (m) => Marker(
-                        point: m.point,
-                        width: 50,
-                        height: 50,
-                        alignment: Alignment.center,
-                        child: GestureDetector(
-                          onTap: () {
-                            _showItem(context, m);
-                          },
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.redAccent,
-                            size: 40,
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.wintkhantlin.zaychin',
+                maxZoom: 19,
+                minZoom: 1,
+              ),
+              if (_markers.isNotEmpty)
+                MarkerLayer(
+                  markers: _markers
+                      .map(
+                        (m) => Marker(
+                          point: m.point,
+                          width: 50,
+                          height: 50,
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            onTap: () {
+                              _showItem(context, m);
+                            },
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.redAccent,
+                              size: 40,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              ),
-          ],
+                      )
+                      .toList(),
+                ),
+            ],
+          ),
         ),
         if (_markers.isEmpty)
           Center(
