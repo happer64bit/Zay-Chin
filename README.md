@@ -227,7 +227,7 @@ If you encounter type casting errors with location coordinates:
 
 ## License
 
-[Add your license here]
+[LICENSE](./LICENSE)
 
 ## Support
 
