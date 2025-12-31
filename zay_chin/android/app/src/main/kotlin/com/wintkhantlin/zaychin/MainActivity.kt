@@ -1,4 +1,4 @@
-package com.wintkhantlin.zay_chin
+package com.wintkhantlin.zaychin
 
 import io.flutter.embedding.android.FlutterActivity
 
