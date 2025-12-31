@@ -11,10 +11,7 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         '${ApiConfig.authPrefix}/create',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
       final authResponse = AuthResponse.fromJson(response.data);
       _client.setAccessToken(authResponse.data.auth.accessToken);
@@ -28,15 +25,10 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         '${ApiConfig.authPrefix}/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
-        options: Options(
-          validateStatus: (status) => status! < 500,
-        ),
+        data: {'email': email, 'password': password},
+        options: Options(validateStatus: (status) => status! < 500),
       );
-      
+
       if (response.statusCode == 200) {
         final authResponse = AuthResponse.fromJson(response.data);
         _client.setAccessToken(authResponse.data.auth.accessToken);
@@ -63,20 +55,18 @@ class AuthService {
   }
 }
 
-  String _handleError(DioException error) {
-    if (error.response != null) {
-      final data = error.response!.data;
-      if (data is Map && data.containsKey('message')) {
-        return data['message'] as String;
-      }
-      return 'An error occurred: ${error.response!.statusCode}';
-    } else if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout) {
-      return 'Connection timeout. Please check your internet connection.';
-    } else if (error.type == DioExceptionType.connectionError) {
-      print(error);
-      return 'Unable to connect to server. Please check your connection.';
+String _handleError(DioException error) {
+  if (error.response != null) {
+    final data = error.response!.data;
+    if (data is Map && data.containsKey('message')) {
+      return data['message'] as String;
     }
-    return error.message ?? 'An unexpected error occurred';
+    return 'An error occurred: ${error.response!.statusCode}';
+  } else if (error.type == DioExceptionType.connectionTimeout ||
+      error.type == DioExceptionType.receiveTimeout) {
+    return 'Connection timeout. Please check your internet connection.';
+  } else if (error.type == DioExceptionType.connectionError) {
+    return 'Unable to connect to server. Please check your connection.';
   }
+  return error.message ?? 'An unexpected error occurred';
 }
