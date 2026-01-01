@@ -1,4 +1,4 @@
-![Zay Chin](./.github/assets/icon.png)
+<img src="./.github/assets/icon.png" width="100" alt="Zay Chin" />
 
 # FamCart - Family Shopping Cart App
 
