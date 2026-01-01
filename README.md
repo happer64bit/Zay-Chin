@@ -2,7 +2,7 @@
 
 # FamCart - Family Shopping Cart App
 
-A collaborative shopping cart application that allows family members to create groups, add items to shared carts, and track shopping locations on a map.
+A collaborative shopping cart application that allows family members to create groups, add items to shared carts, and track shopping locations on a map. [Live Demo Video](https://www.linkedin.com/feed/update/urn:li:activity:7412413027284652035/)
 
 ## Features
 
